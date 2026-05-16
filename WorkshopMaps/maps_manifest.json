@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-16T14:15:48.487227+00:00",
+  "source": "workshop_details.csv",
+  "block_keywords": [
+    "连跳",
+    "恐怖",
+    "听歌识曲",
+    "解密",
+    "感染者",
+    "躲猫猫"
+  ],
+  "files": [
+    {
+      "file": "maps_100_300.tsv",
+      "min_mb": 100,
+      "max_mb": 300,
+      "count": 1534
+    },
+    {
+      "file": "maps_100_500.tsv",
+      "min_mb": 100,
+      "max_mb": 500,
+      "count": 1930
+    }
+  ]
+}
