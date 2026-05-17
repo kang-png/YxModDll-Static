@@ -18,6 +18,12 @@
       "count": 1534
     },
     {
+      "file": "maps_300_500.tsv",
+      "min_mb": 300,
+      "max_mb": 500,
+      "count": 396
+    },
+    {
       "file": "maps_100_500.tsv",
       "min_mb": 100,
       "max_mb": 500,

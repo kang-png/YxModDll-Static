@@ -359,6 +359,83 @@
         border: 1px solid rgba(47, 124, 246, 0.10);
     }
 
+    .link-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .link-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: center;
+        padding: 13px 15px;
+        border: 1px solid rgba(47, 124, 246, 0.12);
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(244, 250, 255, 0.82));
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .link-row:hover {
+        border-color: rgba(47, 124, 246, 0.28);
+        box-shadow: 0 12px 26px rgba(47, 124, 246, 0.10);
+    }
+
+    .link-row span {
+        color: var(--muted);
+        font-size: 14px;
+        word-break: break-all;
+        text-align: right;
+    }
+
+    .support-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .support-action {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 118px;
+        padding: 22px;
+        border-radius: 16px;
+        border: 1px solid rgba(47, 124, 246, 0.16);
+        background:
+            radial-gradient(circle at top right, rgba(43, 199, 217, 0.18), transparent 34%),
+            linear-gradient(135deg, rgba(47, 124, 246, 0.14), rgba(37, 178, 124, 0.12)),
+            rgba(255, 255, 255, 0.92);
+        color: var(--text);
+        text-decoration: none;
+        box-shadow: 0 16px 34px rgba(47, 124, 246, 0.12);
+    }
+
+    .support-action:hover {
+        transform: translateY(-2px);
+        border-color: rgba(47, 124, 246, 0.32);
+        box-shadow: 0 22px 42px rgba(47, 124, 246, 0.18);
+    }
+
+    .support-action strong {
+        font-size: 24px;
+        line-height: 1.15;
+    }
+
+    .support-action span {
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 15px;
+    }
+
+    .support-qr-wrap {
+        margin-top: 18px;
+        max-width: 300px;
+    }
+
     .stats {
         display: flex;
         flex-wrap: wrap;
@@ -381,7 +458,6 @@
 
     .support-image {
         width: 100%;
-        margin-top: 14px;
         border-radius: 16px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow);
@@ -422,6 +498,10 @@
         .lang-switcher {
             left: 0;
             right: auto;
+        }
+
+        .support-qr-wrap {
+            max-width: none;
         }
     }
 </style>
@@ -471,6 +551,7 @@
             <a class="button button-primary" href="https://cdn.jsdelivr.net/gh/kang-png/YxModDll-Static@main/YxModRelease.zip" target="_blank" rel="noopener noreferrer" data-i18n="downloadPrimary">下载最新版本</a>
             <a class="button button-secondary" href="https://github.com/kang-png/YxModDll-Static/raw/refs/heads/main/YxModRelease.zip" target="_blank" rel="noopener noreferrer" data-i18n="downloadGithub">GitHub 原始链接</a>
             <a class="button button-ghost" href="https://github.com/kang-png/YxModDll-Static/issues" target="_blank" rel="noopener noreferrer" data-i18n="issueButton">提交 Issue</a>
+            <a class="button button-ghost" href="https://discord.gg/fKz89kdUjZ" target="_blank" rel="noopener noreferrer" data-i18n="discordButton">Discord 社区</a>
         </div>
     </section>
 
@@ -521,9 +602,38 @@
         <p class="section-text" data-i18n="supportText">
             YxMod 目前仍然是免费提供给大家使用的。如果你觉得这个项目帮到了你，或者只是单纯想支持一下后续维护，可以随意赞助，不赞助也完全没关系。
         </p>
-        <img class="support-image" src="./support-qr.jpg" alt="YxMod 无偿赞助二维码" />
+        <div class="support-actions">
+            <a class="support-action" href="https://www.patreon.com/cw/dudu211/membership" target="_blank" rel="noopener noreferrer">
+                <strong>Patreon</strong>
+                <span data-i18n="patreonHint">国外用户推荐使用 Patreon，适合美元订阅和国际付款。</span>
+            </a>
+            <a class="support-action" href="https://afdian.com/a/palworld_mc1_top" target="_blank" rel="noopener noreferrer">
+                <strong>爱发电</strong>
+                <span data-i18n="afdianHint">国内用户推荐使用爱发电，支付和查看都更方便。</span>
+            </a>
+        </div>
+        <div class="support-qr-wrap">
+            <img class="support-image" src="./support-qr.jpg" alt="YxMod 无偿赞助二维码" />
+        </div>
         <div class="warm-note" data-i18n="supportWarmNote">
             赞助完全自愿，没有任何功能门槛，也不会影响正常下载和使用。
+        </div>
+    </section>
+
+    <section class="card">
+        <h2 class="section-title" data-i18n="communityTitle">社区交流</h2>
+        <p class="section-text" data-i18n="communityText">
+            国内交流主要在 QQ 群，国外玩家和英文反馈可以进 Discord。安装问题、使用反馈、bug 报告都可以从这些入口联系。
+        </p>
+        <div class="link-list">
+            <a class="link-row" href="https://discord.gg/fKz89kdUjZ" target="_blank" rel="noopener noreferrer">
+                <strong>Discord</strong>
+                <span>discord.gg/fKz89kdUjZ</span>
+            </a>
+            <a class="link-row" href="https://qm.qq.com/cgi-bin/qm/qr?k=iogA2WDffF0rVFl37BfiIQ2_Czf_lUaf&jump_from=webapi&authKey=dO9G8cm4iAVqvZJ6aglLsL7pUNgOV/+d3xJSeKMbuXcsydb1tok4UQrVHNM6c4Fa" target="_blank" rel="noopener noreferrer">
+                <strong data-i18n="qqGroupLabel">QQ 群</strong>
+                <span>385272989</span>
+            </a>
         </div>
     </section>
 
@@ -561,6 +671,7 @@
             downloadPrimary: "下载最新版本",
             downloadGithub: "GitHub 原始链接",
             issueButton: "提交 Issue",
+            discordButton: "Discord 社区",
             downloadTitle: "下载说明",
             downloadText: "页面已经移除 Gitee 下载入口，目前保留主下载和几个常用镜像。你可以直接选自己下载速度更顺手的链接，不用来回折腾。",
             downloadEdgeOne: "EdgeOne 加速下载",
@@ -577,8 +688,13 @@
             installStep3: "把这两个文件放进去，和 `Human.exe` 放在同一层目录里就可以了。",
             installWarmNote: "如果你是第一次装模组，照着下面的图片一步一步放文件就够啦。大多数安装问题，基本都是文件放错目录造成的。",
             supportTitle: "无偿赞助",
-            supportText: "YxMod 目前依然免费提供给大家使用。如果这个项目刚好帮到了你，或者你愿意支持一下后续维护，可以随意赞助一杯奶茶钱；当然，不赞助也完全没关系，正常下载和使用不会受任何影响。",
-            supportWarmNote: "赞助完全自愿，没有任何功能门槛，也不会影响正常下载、更新或使用体验。",
+            supportText: "YxMod 目前依然免费提供给大家使用。如果这个项目刚好帮到了你，或者你愿意支持一下后续维护，可以选择下面的入口随意赞助；当然，不赞助也完全没关系。",
+            patreonHint: "国外用户推荐使用 Patreon，适合美元订阅和国际付款。",
+            afdianHint: "国内用户推荐使用爱发电，支付和查看都更方便。",
+            supportWarmNote: "赞助完全自愿，没有任何功能门槛，也不会影响正常下载、更新或使用体验。国内优先爱发电，国外优先 Patreon；二维码只是备用入口。",
+            communityTitle: "社区交流",
+            communityText: "国内交流主要在 QQ 群，国外玩家和英文反馈可以进 Discord。安装问题、使用反馈、bug 报告都可以从这些入口联系。",
+            qqGroupLabel: "QQ 群",
             feedbackTitle: "语言与反馈",
             feedbackText: "页面会根据浏览器语言自动切换为简体中文、English 或 한국어。如果想手动切换，也可以直接点右上角的语言按钮来选择。",
             footer: "YxMod © 2026"
@@ -598,6 +714,7 @@
             downloadPrimary: "Download Latest Version",
             downloadGithub: "GitHub Direct Link",
             issueButton: "Open an Issue",
+            discordButton: "Discord Community",
             downloadTitle: "Downloads",
             downloadText: "The old Gitee entry has been removed. This page now keeps the main package and a few common mirrors, so you can simply use whichever link feels fastest for you.",
             downloadEdgeOne: "EdgeOne Mirror",
@@ -614,8 +731,13 @@
             installStep3: "Place both files there, right next to `Human.exe`.",
             installWarmNote: "If this is your first time installing a mod, the picture guide below should be enough. Most install issues happen because the files were placed in the wrong folder.",
             supportTitle: "Optional Support",
-            supportText: "YxMod is still free to use. If this project helped you and you feel like supporting future maintenance, you are welcome to donate. It is completely optional.",
-            supportWarmNote: "Support is entirely voluntary. There is no paywall, no feature lock, and normal download or use is never affected.",
+            supportText: "YxMod is still free to use. If this project helped you and you feel like supporting future maintenance, you can use one of the links below. It is completely optional.",
+            patreonHint: "Recommended for international users. Patreon works better for USD subscriptions and overseas payments.",
+            afdianHint: "Recommended for users in China. Afdian is easier for local payment and account access.",
+            supportWarmNote: "Support is entirely voluntary. There is no paywall, no feature lock, and normal download or use is never affected. Use Afdian in China, Patreon outside China; the QR code is only a backup option.",
+            communityTitle: "Community",
+            communityText: "Chinese discussion mainly happens in the QQ group. International users and English feedback can use Discord. Install questions, bug reports, and general feedback are all welcome there.",
+            qqGroupLabel: "QQ Group",
             feedbackTitle: "Language and Feedback",
             feedbackText: "The page automatically switches between Simplified Chinese, English, and Korean based on your browser language. You can also use the language button in the top-right corner to switch manually.",
             footer: "YxMod © 2026"
@@ -635,6 +757,7 @@
             downloadPrimary: "최신 버전 다운로드",
             downloadGithub: "GitHub 원본 링크",
             issueButton: "Issue 등록",
+            discordButton: "Discord 커뮤니티",
             downloadTitle: "다운로드",
             downloadText: "기존 Gitee 다운로드 항목은 제거되었습니다. 지금은 메인 패키지와 몇 가지 미러만 남겨 두었으니, 가장 잘 되는 링크를 사용하시면 됩니다.",
             downloadEdgeOne: "EdgeOne 미러",
@@ -651,8 +774,13 @@
             installStep3: "두 파일을 `Human.exe` 와 같은 위치에 넣으면 됩니다.",
             installWarmNote: "처음 모드를 설치하는 경우라면 아래 그림만 순서대로 따라 하셔도 충분합니다. 대부분의 설치 문제는 파일 위치가 잘못되어 생깁니다.",
             supportTitle: "자율 후원",
-            supportText: "YxMod는 지금도 무료로 제공되고 있습니다. 이 프로젝트가 도움이 되었거나 앞으로의 유지 보수를 응원하고 싶다면, 원하실 때 자유롭게 후원하실 수 있습니다. 후원하지 않아도 전혀 문제 없습니다.",
-            supportWarmNote: "후원은 완전히 자율이며, 기능 제한도 없고 다운로드나 사용에도 아무 영향이 없습니다.",
+            supportText: "YxMod는 지금도 무료로 제공되고 있습니다. 이 프로젝트가 도움이 되었거나 앞으로의 유지 보수를 응원하고 싶다면 아래 링크 중 하나로 자유롭게 후원하실 수 있습니다.",
+            patreonHint: "해외 사용자에게는 Patreon을 추천합니다. 달러 구독과 해외 결제에 더 적합합니다.",
+            afdianHint: "중국 사용자는 Afdian을 추천합니다. 현지 결제와 계정 이용이 더 편합니다.",
+            supportWarmNote: "후원은 완전히 자율이며, 기능 제한도 없고 다운로드나 사용에도 아무 영향이 없습니다. 중국에서는 Afdian, 해외에서는 Patreon을 우선 사용해 주세요. QR 코드는 예비용입니다.",
+            communityTitle: "커뮤니티",
+            communityText: "중국어 교류는 주로 QQ 그룹에서 진행됩니다. 해외 사용자와 영어 피드백은 Discord를 이용해 주세요. 설치 질문, 버그 보고, 일반 피드백 모두 환영합니다.",
+            qqGroupLabel: "QQ 그룹",
             feedbackTitle: "언어와 피드백",
             feedbackText: "페이지는 브라우저 언어에 따라 简体中文, English, 한국어로 자동 전환됩니다. 필요하면 오른쪽 위 언어 버튼으로 직접 바꿀 수도 있습니다.",
             footer: "YxMod © 2026"
