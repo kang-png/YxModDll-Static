@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YxMod 全景图预览</title>
+<style>
+    :root {
+        color-scheme: light;
+        --bg: #eaf3ff;
+        --panel: rgba(255, 255, 255, 0.92);
+        --text: #18314d;
+        --muted: #5e748e;
+        --primary: #2f7cf6;
+        --primary-2: #25b27c;
+        --primary-3: #2bc7d9;
+        --border: rgba(74, 138, 200, 0.18);
+        --shadow: 0 24px 60px rgba(24, 49, 77, 0.12);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        position: relative;
+        margin: 0;
+        min-height: 100vh;
+        padding: 20px;
+        overflow: hidden;
+        font-family: "Segoe UI", "Noto Sans KR", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background: linear-gradient(135deg, #f5fbff 0%, #eaf3ff 46%, #eefbfa 100%), var(--bg);
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+            linear-gradient(135deg, rgba(25, 43, 63, 0.44), rgba(15, 71, 93, 0.30)),
+            url("./site-background.jpg") center center / cover no-repeat;
+        transform: scale(1.02);
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+            linear-gradient(180deg, rgba(234, 243, 255, 0.84), rgba(234, 243, 255, 0.90)),
+            radial-gradient(circle at top left, rgba(47, 124, 246, 0.16), transparent 30%),
+            radial-gradient(circle at top right, rgba(37, 178, 124, 0.14), transparent 26%);
+        pointer-events: none;
+    }
+
+    .app {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 14px;
+        height: calc(100vh - 40px);
+        max-width: 1440px;
+        margin: 0 auto;
+    }
+
+    .topbar,
+    .viewer-shell,
+    .side-panel {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+    }
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 66px;
+        padding: 12px 16px;
+        border-radius: 18px;
+    }
+
+    .brand {
+        min-width: 0;
+    }
+
+    .brand h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0;
+    }
+
+    .brand p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .top-actions,
+    .panel-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .button,
+    .file-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 12px;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary), var(--primary-3) 48%, var(--primary-2));
+        box-shadow: 0 14px 28px rgba(47, 124, 246, 0.20);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .button:hover,
+    .file-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(47, 124, 246, 0.26);
+    }
+
+    .button.secondary {
+        color: var(--text);
+        background: linear-gradient(180deg, #f8fcff, #eff8ff);
+        border: 1px solid rgba(47, 124, 246, 0.14);
+        box-shadow: none;
+    }
+
+    .file-button input {
+        display: none;
+    }
+
+    .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 14px;
+        min-height: 0;
+    }
+
+    .viewer-shell {
+        position: relative;
+        min-height: 0;
+        border-radius: 18px;
+        overflow: hidden;
+        background:
+            linear-gradient(135deg, rgba(24, 49, 77, 0.92), rgba(21, 91, 115, 0.84)),
+            #0d2034;
+    }
+
+    #viewer {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    #viewer.dragging {
+        cursor: grabbing;
+    }
+
+    .drop-overlay {
+        position: absolute;
+        inset: 18px;
+        display: grid;
+        place-items: center;
+        border: 2px dashed rgba(255, 255, 255, 0.42);
+        border-radius: 18px;
+        color: rgba(255, 255, 255, 0.90);
+        text-align: center;
+        pointer-events: none;
+        transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .drop-overlay.hidden {
+        opacity: 0;
+    }
+
+    .viewer-shell.drag-over .drop-overlay {
+        border-color: rgba(255, 255, 255, 0.88);
+        background: rgba(47, 124, 246, 0.14);
+    }
+
+    .drop-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0;
+    }
+
+    .drop-subtitle {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 15px;
+    }
+
+    .hud {
+        position: absolute;
+        left: 18px;
+        bottom: 18px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        pointer-events: none;
+    }
+
+    .pill {
+        padding: 8px 11px;
+        border-radius: 999px;
+        background: rgba(10, 22, 36, 0.62);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 13px;
+        backdrop-filter: blur(8px);
+    }
+
+    .side-panel {
+        min-height: 0;
+        overflow: auto;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .panel-title {
+        margin: 0 0 14px;
+        font-size: 18px;
+        letter-spacing: 0;
+    }
+
+    .meta {
+        display: grid;
+        gap: 10px;
+        margin: 14px 0 18px;
+    }
+
+    .meta-row {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 8px;
+        align-items: baseline;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(248, 252, 255, 0.92), rgba(239, 248, 255, 0.82));
+        border: 1px solid rgba(47, 124, 246, 0.10);
+        font-size: 14px;
+    }
+
+    .meta-label {
+        color: var(--muted);
+    }
+
+    .meta-value {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+    }
+
+    .status {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(47, 124, 246, 0.12);
+        background: rgba(47, 124, 246, 0.08);
+        color: #275170;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .status.warning {
+        border-color: rgba(232, 145, 42, 0.24);
+        background: rgba(232, 145, 42, 0.10);
+        color: #8b551c;
+    }
+
+    .range-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr) 44px;
+        gap: 10px;
+        align-items: center;
+        margin: 14px 0;
+        font-size: 14px;
+        color: var(--muted);
+    }
+
+    input[type="range"] {
+        width: 100%;
+        accent-color: var(--primary);
+    }
+
+    @media (max-width: 900px) {
+        body {
+            padding: 12px;
+            overflow: auto;
+        }
+
+        .app {
+            height: auto;
+            min-height: calc(100vh - 24px);
+        }
+
+        .topbar,
+        .workspace {
+            grid-template-columns: 1fr;
+        }
+
+        .topbar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .viewer-shell {
+            height: min(70vh, 620px);
+            min-height: 380px;
+        }
+
+        .side-panel {
+            max-height: none;
+        }
+    }
+</style>
+</head>
+<body>
+<main class="app">
+    <header class="topbar">
+        <div class="brand">
+            <h1>YxMod 全景图预览</h1>
+            <p>本地预览 2:1 全景 PNG / JPG</p>
+        </div>
+        <div class="top-actions">
+            <label class="file-button">
+                选择图片
+                <input id="fileInput" type="file" accept="image/*" />
+            </label>
+            <button class="button secondary" id="resetView" type="button">重置视角</button>
+            <a class="button secondary" href="./index.html">返回首页</a>
+        </div>
+    </header>
+
+    <section class="workspace">
+        <div class="viewer-shell" id="viewerShell">
+            <canvas id="viewer"></canvas>
+            <div class="drop-overlay" id="dropOverlay">
+                <div>
+                    <p class="drop-title">拖入全景图</p>
+                    <p class="drop-subtitle">支持 YxMod 生成的 360 度 2:1 图片</p>
+                </div>
+            </div>
+            <div class="hud">
+                <span class="pill" id="yawHud">Yaw 0</span>
+                <span class="pill" id="pitchHud">Pitch 0</span>
+                <span class="pill" id="fovHud">FOV 75</span>
+            </div>
+        </div>
+
+        <aside class="side-panel">
+            <h2 class="panel-title">预览信息</h2>
+            <div class="panel-actions">
+                <button class="button" id="flipVertical" type="button">上下翻转</button>
+                <button class="button secondary" id="clearImage" type="button">清空</button>
+            </div>
+
+            <div class="meta">
+                <div class="meta-row">
+                    <span class="meta-label">文件</span>
+                    <span class="meta-value" id="fileName">未选择</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">尺寸</span>
+                    <span class="meta-value" id="imageSize">-</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">比例</span>
+                    <span class="meta-value" id="imageRatio">-</span>
+                </div>
+            </div>
+
+            <label class="range-row">
+                <span>视野</span>
+                <input id="fovRange" type="range" min="35" max="105" value="75" />
+                <span id="fovValue">75</span>
+            </label>
+
+            <div class="status" id="statusText">
+                等待图片。拖入图片，或本地打开页面时用 ?img=E:\...\panorama.png 自动载入。
+            </div>
+        </aside>
+    </section>
+</main>
+
+<script>
+(() => {
+    const canvas = document.getElementById("viewer");
+    const shell = document.getElementById("viewerShell");
+    const dropOverlay = document.getElementById("dropOverlay");
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+    const imageSize = document.getElementById("imageSize");
+    const imageRatio = document.getElementById("imageRatio");
+    const statusText = document.getElementById("statusText");
+    const fovRange = document.getElementById("fovRange");
+    const fovValue = document.getElementById("fovValue");
+    const yawHud = document.getElementById("yawHud");
+    const pitchHud = document.getElementById("pitchHud");
+    const fovHud = document.getElementById("fovHud");
+
+    const gl = canvas.getContext("webgl", { antialias: true, preserveDrawingBuffer: true });
+    let program;
+    let texture;
+    let hasTexture = false;
+    let yaw = 0;
+    let pitch = 0;
+    let fov = 75;
+    let verticalFlip = false;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let framePending = false;
+
+    const vertexShaderSource = `
+        attribute vec2 aPosition;
+        varying vec2 vUv;
+        void main() {
+            vUv = aPosition * 0.5 + 0.5;
+            gl_Position = vec4(aPosition, 0.0, 1.0);
+        }
+    `;
+
+    const fragmentShaderSource = `
+        precision mediump float;
+        varying vec2 vUv;
+        uniform sampler2D uTexture;
+        uniform bool uHasTexture;
+        uniform bool uVerticalFlip;
+        uniform float uYaw;
+        uniform float uPitch;
+        uniform float uFov;
+        uniform float uAspect;
+
+        const float PI = 3.141592653589793;
+
+        void main() {
+            vec2 screen = vUv * 2.0 - 1.0;
+            screen.x *= uAspect;
+            float focal = 1.0 / tan(radians(uFov) * 0.5);
+            vec3 dir = normalize(vec3(screen.x, screen.y, focal));
+
+            float cp = cos(uPitch);
+            float sp = sin(uPitch);
+            dir = vec3(dir.x, dir.y * cp - dir.z * sp, dir.y * sp + dir.z * cp);
+
+            float cy = cos(uYaw);
+            float sy = sin(uYaw);
+            dir = vec3(dir.x * cy + dir.z * sy, dir.y, -dir.x * sy + dir.z * cy);
+            dir = normalize(dir);
+
+            if (!uHasTexture) {
+                vec3 top = vec3(0.12, 0.30, 0.44);
+                vec3 bottom = vec3(0.05, 0.11, 0.19);
+                vec3 color = mix(bottom, top, smoothstep(-1.0, 1.0, dir.y));
+                gl_FragColor = vec4(color, 1.0);
+                return;
+            }
+
+            float longitude = atan(dir.x, dir.z);
+            float latitude = asin(clamp(dir.y, -1.0, 1.0));
+            float u = 0.5 + longitude / (2.0 * PI);
+            float v = 0.5 - latitude / PI;
+            if (uVerticalFlip) {
+                v = 1.0 - v;
+            }
+            gl_FragColor = texture2D(uTexture, vec2(u, v));
+        }
+    `;
+
+    function setStatus(message, warning = false) {
+        statusText.textContent = message;
+        statusText.classList.toggle("warning", warning);
+    }
+
+    function createShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(shader));
+        }
+        return shader;
+    }
+
+    function createProgram() {
+        const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            throw new Error(gl.getProgramInfoLog(shaderProgram));
+        }
+        return shaderProgram;
+    }
+
+    function initGl() {
+        program = createProgram();
+        gl.useProgram(program);
+
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+            gl.STATIC_DRAW
+        );
+
+        const positionLocation = gl.getAttribLocation(program, "aPosition");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    }
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.round(rect.width * pixelRatio));
+        const height = Math.max(1, Math.round(rect.height * pixelRatio));
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+            gl.viewport(0, 0, width, height);
+        }
+        requestRender();
+    }
+
+    function render() {
+        framePending = false;
+        if (!gl || !program) {
+            return;
+        }
+
+        gl.useProgram(program);
+        gl.uniform1i(gl.getUniformLocation(program, "uTexture"), 0);
+        gl.uniform1i(gl.getUniformLocation(program, "uHasTexture"), hasTexture ? 1 : 0);
+        gl.uniform1i(gl.getUniformLocation(program, "uVerticalFlip"), verticalFlip ? 1 : 0);
+        gl.uniform1f(gl.getUniformLocation(program, "uYaw"), yaw);
+        gl.uniform1f(gl.getUniformLocation(program, "uPitch"), pitch);
+        gl.uniform1f(gl.getUniformLocation(program, "uFov"), fov);
+        gl.uniform1f(gl.getUniformLocation(program, "uAspect"), canvas.width / Math.max(1, canvas.height));
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        yawHud.textContent = `Yaw ${Math.round(yaw * 180 / Math.PI)}`;
+        pitchHud.textContent = `Pitch ${Math.round(pitch * 180 / Math.PI)}`;
+        fovHud.textContent = `FOV ${Math.round(fov)}`;
+        fovValue.textContent = Math.round(fov);
+    }
+
+    function requestRender() {
+        if (!framePending) {
+            framePending = true;
+            requestAnimationFrame(render);
+        }
+    }
+
+    function resetView() {
+        yaw = 0;
+        pitch = 0;
+        fov = 75;
+        fovRange.value = String(fov);
+        requestRender();
+    }
+
+    function clearImage() {
+        hasTexture = false;
+        dropOverlay.classList.remove("hidden");
+        fileName.textContent = "未选择";
+        imageSize.textContent = "-";
+        imageRatio.textContent = "-";
+        setStatus("等待图片。拖入图片，或本地打开页面时用 ?img=E:\\...\\panorama.png 自动载入。");
+        requestRender();
+    }
+
+    function loadImageFile(file) {
+        if (!file || !file.type.startsWith("image/")) {
+            setStatus("文件格式不支持。", true);
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        loadImageUrl(objectUrl, file.name, () => URL.revokeObjectURL(objectUrl));
+    }
+
+    function loadImageUrl(sourceUrl, displayName, cleanup) {
+        const image = new Image();
+        if (/^https?:/i.test(sourceUrl)) {
+            image.crossOrigin = "anonymous";
+        }
+        image.onload = () => {
+            try {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                hasTexture = true;
+                dropOverlay.classList.add("hidden");
+
+                const ratio = image.width / Math.max(1, image.height);
+                fileName.textContent = displayName || sourceUrl;
+                imageSize.textContent = `${image.width} x ${image.height}`;
+                imageRatio.textContent = ratio.toFixed(2);
+
+                if (Math.abs(ratio - 2) > 0.08) {
+                    setStatus("图片不是标准 2:1，全景显示可能会变形。", true);
+                } else {
+                    setStatus("已载入。");
+                }
+
+                requestRender();
+            } catch (error) {
+                setStatus("图片已读取，但浏览器禁止把它放进 WebGL。请改用拖入图片。", true);
+            } finally {
+                if (cleanup) {
+                    cleanup();
+                }
+            }
+        };
+        image.onerror = () => {
+            if (cleanup) {
+                cleanup();
+            }
+            setStatus("图片读取失败。", true);
+        };
+        image.src = sourceUrl;
+    }
+
+    function getInitialImageParam() {
+        const params = new URLSearchParams(window.location.search);
+        const explicit = params.get("img") || params.get("path") || params.get("file") || params.get("src");
+        if (explicit) {
+            return explicit;
+        }
+
+        const entries = Array.from(params.entries());
+        if (entries.length === 1) {
+            return entries[0][1] || entries[0][0];
+        }
+
+        return "";
+    }
+
+    function stripWrappingQuotes(value) {
+        let result = String(value || "").trim();
+        while (
+            (result.startsWith("\"") && result.endsWith("\"")) ||
+            (result.startsWith("'") && result.endsWith("'"))
+        ) {
+            result = result.slice(1, -1).trim();
+        }
+        return result;
+    }
+
+    function toImageUrl(value) {
+        const rawValue = stripWrappingQuotes(value);
+        if (!rawValue) {
+            return null;
+        }
+
+        if (/^(https?:|blob:|data:|file:)/i.test(rawValue)) {
+            return rawValue.replace(/\\/g, "/");
+        }
+
+        if (/^[a-zA-Z]:[\\/]/.test(rawValue)) {
+            const normalized = rawValue.replace(/\\/g, "/");
+            return "file:///" + normalized.split("/").map(encodeURIComponent).join("/").replace(/^([a-zA-Z])%3A/, "$1:");
+        }
+
+        return rawValue;
+    }
+
+    function getImageLabel(value) {
+        const normalized = stripWrappingQuotes(value).replace(/\\/g, "/");
+        const parts = normalized.split("/");
+        return parts[parts.length - 1] || normalized;
+    }
+
+    function loadInitialImageFromQuery() {
+        const initial = getInitialImageParam();
+        if (!initial) {
+            return;
+        }
+
+        const imageUrl = toImageUrl(initial);
+        if (!imageUrl) {
+            return;
+        }
+
+        if (/^file:/i.test(imageUrl) && window.location.protocol !== "file:") {
+            setStatus("线上页面不能自动读取本地文件路径。请拖入图片，或把 panorama.html 下载到本地后用 file:/// 打开。", true);
+            return;
+        }
+
+        loadImageUrl(imageUrl, getImageLabel(initial));
+    }
+
+    if (!gl) {
+        setStatus("当前浏览器不支持 WebGL。", true);
+        return;
+    }
+
+    try {
+        initGl();
+        resize();
+    } catch (error) {
+        setStatus("WebGL 初始化失败: " + error.message, true);
+        return;
+    }
+
+    window.addEventListener("resize", resize);
+    if ("ResizeObserver" in window) {
+        new ResizeObserver(resize).observe(shell);
+    }
+
+    fileInput.addEventListener("change", () => {
+        loadImageFile(fileInput.files && fileInput.files[0]);
+        fileInput.value = "";
+    });
+
+    shell.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        shell.classList.add("drag-over");
+    });
+
+    shell.addEventListener("dragleave", () => {
+        shell.classList.remove("drag-over");
+    });
+
+    shell.addEventListener("drop", (event) => {
+        event.preventDefault();
+        shell.classList.remove("drag-over");
+        loadImageFile(event.dataTransfer.files && event.dataTransfer.files[0]);
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        canvas.classList.add("dragging");
+        canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+        if (!dragging) {
+            return;
+        }
+
+        const dx = event.clientX - lastX;
+        const dy = event.clientY - lastY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        yaw -= dx * 0.006;
+        pitch += dy * 0.006;
+        pitch = Math.max(-1.48, Math.min(1.48, pitch));
+        requestRender();
+    });
+
+    function endDrag(event) {
+        dragging = false;
+        canvas.classList.remove("dragging");
+        if (event && canvas.hasPointerCapture(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+        }
+    }
+
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+
+    canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        fov = Math.max(35, Math.min(105, fov + event.deltaY * 0.03));
+        fovRange.value = String(Math.round(fov));
+        requestRender();
+    }, { passive: false });
+
+    fovRange.addEventListener("input", () => {
+        fov = Number(fovRange.value);
+        requestRender();
+    });
+
+    document.getElementById("resetView").addEventListener("click", resetView);
+    document.getElementById("clearImage").addEventListener("click", clearImage);
+    document.getElementById("flipVertical").addEventListener("click", () => {
+        verticalFlip = !verticalFlip;
+        requestRender();
+    });
+
+    loadInitialImageFromQuery();
+})();
+</script>
+</body>
+</html>
