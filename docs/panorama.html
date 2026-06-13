@@ -170,8 +170,25 @@
         touch-action: none;
     }
 
+    #viewer.fallback-active {
+        opacity: 0;
+    }
+
     #viewer.dragging {
         cursor: grabbing;
+    }
+
+    .fallback-view {
+        position: absolute;
+        inset: 0;
+        background-position: 50% 50%;
+        background-repeat: repeat-x;
+        background-size: auto 130%;
+        pointer-events: none;
+    }
+
+    .fallback-view.hidden {
+        display: none;
     }
 
     .drop-overlay {
@@ -355,6 +372,7 @@
     <section class="workspace">
         <div class="viewer-shell" id="viewerShell">
             <canvas id="viewer"></canvas>
+            <div class="fallback-view hidden" id="fallbackView" aria-hidden="true"></div>
             <div class="drop-overlay" id="dropOverlay">
                 <div>
                     <p class="drop-title">拖入全景图</p>
@@ -407,6 +425,7 @@
 (() => {
     const canvas = document.getElementById("viewer");
     const shell = document.getElementById("viewerShell");
+    const fallbackView = document.getElementById("fallbackView");
     const dropOverlay = document.getElementById("dropOverlay");
     const fileInput = document.getElementById("fileInput");
     const fileName = document.getElementById("fileName");
@@ -423,6 +442,8 @@
     let program;
     let texture;
     let hasTexture = false;
+    let usingFallback = false;
+    let fallbackImageSize = null;
     let yaw = 0;
     let pitch = 0;
     let fov = 75;
@@ -493,6 +514,33 @@
         statusText.classList.toggle("warning", warning);
     }
 
+    function setFallbackMode(enabled) {
+        usingFallback = enabled;
+        fallbackView.classList.toggle("hidden", !enabled);
+        canvas.classList.toggle("fallback-active", enabled);
+    }
+
+    function updateHud() {
+        yawHud.textContent = `Yaw ${Math.round(yaw * 180 / Math.PI)}`;
+        pitchHud.textContent = `Pitch ${Math.round(pitch * 180 / Math.PI)}`;
+        fovHud.textContent = `FOV ${Math.round(fov)}`;
+        fovValue.textContent = Math.round(fov);
+    }
+
+    function updateFallbackView() {
+        if (!usingFallback || !fallbackImageSize) {
+            return;
+        }
+
+        const yawTurns = ((yaw / (Math.PI * 2)) % 1 + 1) % 1;
+        const pitchPercent = Math.max(0, Math.min(100, 50 + pitch / Math.PI * 100));
+        const fallbackPitchPercent = verticalFlip ? 100 - pitchPercent : pitchPercent;
+        const heightPercent = Math.max(105, Math.min(260, 130 * 75 / Math.max(35, fov)));
+        fallbackView.style.backgroundSize = `auto ${heightPercent}%`;
+        fallbackView.style.backgroundPosition = `${50 - yawTurns * 100}% ${fallbackPitchPercent}%`;
+        updateHud();
+    }
+
     function createShader(type, source) {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
@@ -556,6 +604,11 @@
 
     function render() {
         framePending = false;
+        if (usingFallback) {
+            updateFallbackView();
+            return;
+        }
+
         if (!gl || !program) {
             return;
         }
@@ -571,10 +624,7 @@
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        yawHud.textContent = `Yaw ${Math.round(yaw * 180 / Math.PI)}`;
-        pitchHud.textContent = `Pitch ${Math.round(pitch * 180 / Math.PI)}`;
-        fovHud.textContent = `FOV ${Math.round(fov)}`;
-        fovValue.textContent = Math.round(fov);
+        updateHud();
     }
 
     function requestRender() {
@@ -594,6 +644,9 @@
 
     function clearImage() {
         hasTexture = false;
+        fallbackImageSize = null;
+        fallbackView.style.backgroundImage = "";
+        setFallbackMode(false);
         dropOverlay.classList.remove("hidden");
         fileName.textContent = "未选择";
         imageSize.textContent = "-";
@@ -614,6 +667,7 @@
 
     function loadImageUrl(sourceUrl, displayName, cleanup) {
         const image = new Image();
+        const isRemoteHttp = /^https?:/i.test(sourceUrl);
         if (/^https?:/i.test(sourceUrl)) {
             image.crossOrigin = "anonymous";
         }
@@ -622,6 +676,8 @@
                 gl.bindTexture(gl.TEXTURE_2D, texture);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
                 hasTexture = true;
+                fallbackImageSize = null;
+                setFallbackMode(false);
                 dropOverlay.classList.add("hidden");
 
                 const ratio = image.width / Math.max(1, image.height);
@@ -637,12 +693,49 @@
 
                 requestRender();
             } catch (error) {
-                setStatus("图片已读取，但浏览器禁止把它放进 WebGL。请改用拖入图片。", true);
+                loadFallbackImage(sourceUrl, displayName, cleanup, "远程图床不允许 WebGL 读取，已切到兼容预览。");
+                return;
             } finally {
                 if (cleanup) {
                     cleanup();
                 }
             }
+        };
+        image.onerror = () => {
+            if (isRemoteHttp) {
+                loadFallbackImage(sourceUrl, displayName, cleanup, "远程图床不允许 WebGL 读取，已切到兼容预览。");
+                return;
+            }
+
+            if (cleanup) {
+                cleanup();
+            }
+            setStatus("图片读取失败。", true);
+        };
+        image.src = sourceUrl;
+    }
+
+    function loadFallbackImage(sourceUrl, displayName, cleanup, message) {
+        const image = new Image();
+        image.onload = () => {
+            hasTexture = false;
+            fallbackImageSize = { width: image.naturalWidth || image.width, height: image.naturalHeight || image.height };
+            fallbackView.style.backgroundImage = `url("${sourceUrl.replace(/"/g, "\\\"")}")`;
+            setFallbackMode(true);
+            dropOverlay.classList.add("hidden");
+
+            const ratio = fallbackImageSize.width / Math.max(1, fallbackImageSize.height);
+            fileName.textContent = displayName || sourceUrl;
+            imageSize.textContent = `${fallbackImageSize.width} x ${fallbackImageSize.height}`;
+            imageRatio.textContent = ratio.toFixed(2);
+
+            if (Math.abs(ratio - 2) > 0.08) {
+                setStatus("图片不是标准 2:1，兼容预览可能会变形。", true);
+            } else {
+                setStatus(message || "已载入兼容预览。", true);
+            }
+
+            requestRender();
         };
         image.onerror = () => {
             if (cleanup) {
