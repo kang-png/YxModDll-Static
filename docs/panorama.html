@@ -178,6 +178,10 @@
         cursor: grabbing;
     }
 
+    .viewer-shell.dragging {
+        cursor: grabbing;
+    }
+
     .fallback-view {
         position: absolute;
         inset: 0;
@@ -532,12 +536,16 @@
             return;
         }
 
+        const rect = shell.getBoundingClientRect();
         const yawTurns = ((yaw / (Math.PI * 2)) % 1 + 1) % 1;
         const pitchPercent = Math.max(0, Math.min(100, 50 + pitch / Math.PI * 100));
         const fallbackPitchPercent = verticalFlip ? 100 - pitchPercent : pitchPercent;
         const heightPercent = Math.max(105, Math.min(260, 130 * 75 / Math.max(35, fov)));
+        const scaledImageHeight = rect.height * heightPercent / 100;
+        const scaledImageWidth = scaledImageHeight * fallbackImageSize.width / Math.max(1, fallbackImageSize.height);
+        const offsetX = rect.width / 2 - yawTurns * scaledImageWidth;
         fallbackView.style.backgroundSize = `auto ${heightPercent}%`;
-        fallbackView.style.backgroundPosition = `${50 - yawTurns * 100}% ${fallbackPitchPercent}%`;
+        fallbackView.style.backgroundPosition = `${offsetX}px ${fallbackPitchPercent}%`;
         updateHud();
     }
 
@@ -853,19 +861,25 @@
         loadImageFile(event.dataTransfer.files && event.dataTransfer.files[0]);
     });
 
-    canvas.addEventListener("pointerdown", (event) => {
+    shell.addEventListener("pointerdown", (event) => {
+        if (event.button !== undefined && event.button !== 0) {
+            return;
+        }
+
         dragging = true;
         lastX = event.clientX;
         lastY = event.clientY;
+        shell.classList.add("dragging");
         canvas.classList.add("dragging");
-        canvas.setPointerCapture(event.pointerId);
+        shell.setPointerCapture(event.pointerId);
     });
 
-    canvas.addEventListener("pointermove", (event) => {
+    shell.addEventListener("pointermove", (event) => {
         if (!dragging) {
             return;
         }
 
+        event.preventDefault();
         const dx = event.clientX - lastX;
         const dy = event.clientY - lastY;
         lastX = event.clientX;
@@ -878,16 +892,17 @@
 
     function endDrag(event) {
         dragging = false;
+        shell.classList.remove("dragging");
         canvas.classList.remove("dragging");
-        if (event && canvas.hasPointerCapture(event.pointerId)) {
-            canvas.releasePointerCapture(event.pointerId);
+        if (event && shell.hasPointerCapture(event.pointerId)) {
+            shell.releasePointerCapture(event.pointerId);
         }
     }
 
-    canvas.addEventListener("pointerup", endDrag);
-    canvas.addEventListener("pointercancel", endDrag);
+    shell.addEventListener("pointerup", endDrag);
+    shell.addEventListener("pointercancel", endDrag);
 
-    canvas.addEventListener("wheel", (event) => {
+    shell.addEventListener("wheel", (event) => {
         event.preventDefault();
         fov = Math.max(35, Math.min(105, fov + event.deltaY * 0.03));
         fovRange.value = String(Math.round(fov));
