@@ -4,8 +4,10 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
+    branches: [main]
     paths:
       - 'docs/**'   # 只有 docs 文件夹变化才触发
+      - '.github/workflows/static.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -37,7 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
+          # Publish the website, without the downloadable release binaries.
           path: './docs'
       - name: Deploy to GitHub Pages
         id: deployment
