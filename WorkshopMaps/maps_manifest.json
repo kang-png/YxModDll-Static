@@ -1,33 +1,95 @@
 {
-  "version": 1,
-  "generated_at": "2026-05-16T14:15:48.487227+00:00",
+  "version": 2,
+  "generated_at": "2026-10-19T15:55:01.444345+00:00",
   "source": "workshop_details.csv",
-  "block_keywords": [
-    "连跳",
-    "恐怖",
-    "听歌识曲",
-    "解密",
-    "感染者",
-    "躲猫猫"
-  ],
+  "source_count": 5631,
+  "classification": "title and description keywords; categories may overlap",
   "files": [
     {
       "file": "maps_100_300.tsv",
+      "label": "100–300 MB",
       "min_mb": 100,
       "max_mb": 300,
-      "count": 1534
+      "count": 1542,
+      "sha256": "d4d8be2bf17619b008eb584bd5bd1aac05f81d1fcef09d040024d7658d8212a3"
     },
     {
       "file": "maps_300_500.tsv",
+      "label": "300–500 MB",
       "min_mb": 300,
       "max_mb": 500,
-      "count": 396
+      "count": 398,
+      "sha256": "f4819086bc281de30b8090e74444fd9000664b576b41be51e95afd842e121d36"
     },
     {
       "file": "maps_100_500.tsv",
+      "label": "100–500 MB",
       "min_mb": 100,
       "max_mb": 500,
-      "count": 1930
+      "count": 1940,
+      "sha256": "bdac0f3d31f54360083970b18fd788da909a13f947d844a01efad7651ed5f67e"
+    },
+    {
+      "file": "maps_500_plus.tsv",
+      "label": "500 MB+",
+      "min_mb": 500,
+      "max_mb": null,
+      "count": 254,
+      "sha256": "c543bd391fabf040a2446a884a43310fb6049b969e217b7a93aefd19a750c055"
+    },
+    {
+      "file": "maps_bhop.tsv",
+      "label": "连跳",
+      "category": "bhop",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 694,
+      "sha256": "d9347254464a1178e1326ee9e144a152842189744c87ff44312d24daf582aaad"
+    },
+    {
+      "file": "maps_puzzle.tsv",
+      "label": "解谜",
+      "category": "puzzle",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 171,
+      "sha256": "3d29735c0078f35744f6488cda37a56e700f13b074b5e79b0b283ed246eabfad"
+    },
+    {
+      "file": "maps_hide_seek.tsv",
+      "label": "躲猫猫",
+      "category": "hide_seek",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 118,
+      "sha256": "d859dcc42894e87ba00165af2dbbca9f0b9697ba8efc1f8ae24241ca8d63ca78"
+    },
+    {
+      "file": "maps_infection.tsv",
+      "label": "感染",
+      "category": "infection",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 41,
+      "sha256": "ea40940dc3f9cfd60afedc08104bfa012cbfc3520ad1f434375efa589e49c209"
+    },
+    {
+      "file": "maps_horror.tsv",
+      "label": "恐怖",
+      "category": "horror",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 51,
+      "sha256": "6352058363122158afa388a6e5e9fc72ab133c21b8d63abb75af2a04237c5b21"
+    },
+    {
+      "file": "maps_guess_song.tsv",
+      "label": "听歌识曲",
+      "category": "guess_song",
+      "min_mb": 0,
+      "max_mb": null,
+      "count": 58,
+      "sha256": "28241452f0241b5dc89a9cc003b84244ce3c0cdb47b83e1b63d50e564195d493"
     }
   ]
 }

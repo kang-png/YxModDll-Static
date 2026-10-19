@@ -1,0 +1,68 @@
+name: Update Workshop map catalogs
+
+on:
+  schedule:
+    - cron: '23 20 * * *' # 每天北京时间 04:23
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/workshop/**', '.github/workflows/workshop-maps.yml']
+  pull_request:
+    paths: ['tools/workshop/**', '.github/workflows/workshop-maps.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workshop-map-catalogs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'requests>=2.32,<3'
+      - run: python -B -m unittest discover -s tools/workshop -p 'test_*.py' -v
+
+  refresh:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'requests>=2.32,<3'
+      - name: Fetch all public map pages, refresh details and export every category
+        run: python -u -B tools/workshop/update_maps.py --refresh
+      - name: Publish map catalogs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- WorkshopMaps
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m '定时更新创意工坊地图与玩法分类'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Show catalog counts
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          m = json.loads(Path('WorkshopMaps/maps_manifest.json').read_text())
+          print('| 地图列表 | 数量 |\n| --- | ---: |')
+          for f in m['files']:
+              print(f"| {f['label']} | {f['count']} |")
+          PY

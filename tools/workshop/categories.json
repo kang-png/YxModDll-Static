@@ -1,0 +1,8 @@
+[
+  {"id": "bhop", "label": "连跳", "keywords": ["连跳", "bhop", "bunny hop"]},
+  {"id": "puzzle", "label": "解谜", "keywords": ["解密", "解谜"]},
+  {"id": "hide_seek", "label": "躲猫猫", "keywords": ["躲猫猫", "捉迷藏", "hide and seek", "hide & seek"]},
+  {"id": "infection", "label": "感染", "keywords": ["感染", "infection", "infected"]},
+  {"id": "horror", "label": "恐怖", "keywords": ["恐怖", "horror"]},
+  {"id": "guess_song", "label": "听歌识曲", "keywords": ["听歌识曲", "听歌猜", "猜歌"]}
+]

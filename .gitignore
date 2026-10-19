@@ -4,3 +4,4 @@
 
 *.sqlite
 /.vs
+__pycache__/

@@ -1,0 +1,2 @@
+WorkshopMaps/*.tsv text eol=lf
+WorkshopMaps/*.csv text eol=lf
