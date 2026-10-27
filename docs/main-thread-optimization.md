@@ -1,16 +1,15 @@
 # 通用主线程优化
 
-已实现并部署到本机 64 位游戏。两项优化默认开启，生产代码不按地图 ID、物体名称或材质筛选。原 Unity DLL 保持不变，原生修改只存在于当前游戏进程中。未提交 Git、未发布到更新服务器。
+当前仅保留引擎任务队列调度优化，默认开启。2026-10-27 已移除适用范围较窄的“多线程渲染数据准备”：删除数组并行复制实现、组件挂载、菜单开关及其专用测试分支。原 Unity DLL 保持不变，调度修改仅存在于游戏进程中。
 
 ## 实际改动
 
 1. **引擎任务队列。** 在 Unity 初始化前设置工作线程数量，让构造器按该数量创建线程及配套存储。超过 9 个逻辑核时使用 8 个任务工作线程；较小的 CPU 保留原配置。本机原来创建 31 个任务工作线程，减少过量唤醒和切换后，主线程更快完成一帧。没有在运行途中修改线程数量字段。
-2. **大型渲染数组并行复制。** 当前引擎 `TreeRenderer::CollectTreeRenderers` 的两个复制调用按实际字节量处理。遇到至少 1 MiB 的数据后，按需创建最多 3 个复制工作线程，主线程也参与复制，并等待全部范围完成后继续原引擎流程。小数据及重叠地址沿用原函数，没有大数据的地图不创建复制工作线程。
-3. **模块验证移到后台。** 模块枚举和 SHA-256 校验使用后台任务，每个进程验证一次，切图和重新启用时复用结果。后台不读取 Unity 对象。
+调度优化不减少物体，不改变 LOD、阴影、材质、分辨率或物理步长。关闭设置并重新启动游戏可恢复原线程配置。
 
-没有减少物体、改变 LOD、阴影、材质、分辨率或物理步长。复制的是每次调用传入的新数据，不缓存场景矩阵，因此物体移动、激活和地图变化仍由原游戏决定。关闭功能、离开地图和组件销毁时恢复原生调用点并回收复制工作线程。
+## 2026-10-23 历史测试结果
 
-## 当前验证结果
+以下三图表格包含当时的数组复制实验，不能作为删除该实验后当前版本的整体收益。后续纯调度对照见本文 2026-10-27 补测。
 
 本机 Ryzen 9 5950X（32 逻辑核）、Radeon RX 7700 XT，Unity 2017.4.13f1 x64。采用 1280×720 离屏相机绘制，关闭测试帧率上限及垂直同步，物理和脚本继续运行。相机保持启用，视角固定；后两图的相机位置及旋转保存为 `camera-rig-<id>.txt` 并跨运行复用。
 
@@ -26,7 +25,7 @@
 
 以上是**本机离屏帧耗时**，不等于已验证的桌面显示 FPS。用户在前台工作期间，所有后续测试使用 `-batchmode`，进程 `MainWindowHandle=0`，不接收鼠标键盘输入。探针每帧释放鼠标；默认不会启动交互式窗口。正常屏幕显示、完整通关、多人与其他 CPU/GPU 尚未实测，不能把三个样本的百分比推广到所有机器及地图。
 
-## 构建、正确性及回退
+## 2026-10-23 历史构建、正确性及回退
 
 - 完整 `Release /t:Build` 执行 Reactor，使用实际受保护产物进入游戏测试。
 - 复制检查覆盖零长度、短长度、1 MiB 阈值两侧、约 6 MiB 非整齐长度、非对齐地址、边界哨兵、源数据不变及返回指针；验证实际引擎调用经过受保护的原生回调。
@@ -36,14 +35,14 @@
 
 仅接受 Unity DLL SHA-256：`149e42435f9ee37d8bdc0e40a12a8d30c6818468e2d6925c736ed87ebeda6a97`，同时核对原指令。未知引擎沿用原路径。
 
-本机部署文件：
+以下哈希和回退副本为 2026-10-23 历史快照，包含现已移除的数组复制实验：
 
 | 文件 | SHA-256 |
 | --- | --- |
 | `YxModDll-x64.dll` | `6F294F86EF98CCF6802917777F5C0A4365F4BFA4E016FF4D155B1D03E908E9DA` |
 | `YXWIN64.dll` | `7DB39CC428819780F81D2D97CD20F63587A850C88D6AFA6AAB72CF7822492DD1` |
 
-游戏设置中的“渲染调度优化（重启生效）”可恢复原任务线程配置，保存到游戏目录的 `YxModEngine.ini`；“多线程渲染数据准备”可立即关闭复制功能。两者均默认开启。地图专用植被实验及其开关已删除，当前仅保留通用优化。
+当前菜单仅保留“渲染调度优化（重启生效）”，配置保存到游戏目录的 `YxModEngine.ini`。数组复制及地图专用植被实验均已移除。
 
 完整文件回退副本位于 `artifacts/performance/YxModDll-before-main-thread.dll` 和 `YXWIN64-before-main-thread.dll`；关闭游戏后可恢复对应的两个游戏文件。部署前后的哈希记录在 `main-thread-deployment.json`。
 
@@ -53,16 +52,32 @@
 # 关闭调度优化的原配置对照；保存并恢复已有配置文件。
 pwsh -NoProfile -File tools/performance/test-dense-map.ps1 -WithMod -EngineDiagnosis -TunedBootstrap -OriginalScheduler -ProductDll YxModDll/bin/Release/YxModDll-x64.dll
 
-# 实际保护版本：后台校验、并行复制、开关、切图及回收。
-pwsh -NoProfile -File tools/performance/test-dense-map.ps1 -WithMod -EngineDiagnosis -TunedBootstrap -NativeProduct -ProductDll YxModDll/bin/Release/YxModDll-x64.dll
+# 当前保留的调度优化对照，核对真实线程数量和设置保存。
+pwsh -NoProfile -File tools/performance/test-dense-map.ps1 -WithMod -EngineDiagnosis -TunedBootstrap -ProductDll YxModDll/bin/Release/YxModDll-x64.dll
 
 # 其他两图使用同样命令追加 -MapId 1880991247 或 -MapId 1781627395。
 
-# 检查已部署文件的默认启用与自然退出。
-pwsh -NoProfile -File tools/performance/test-dense-map.ps1 -WithMod -EngineDiagnosis -NativeDefaults
-python tools/performance/summarize-main-thread.py --require-deployed
 ```
 
-原始采样日志、固定相机数据、部署哈希、原生启动测试及汇总 JSON 保存在 `artifacts/performance/`、`artifacts/x64/native-tests.json`。汇总工具拒绝缺少 `DONE`、包含 `FAIL`、线程数量不符或绘制帧数为零的结果。
+原始采样日志、固定相机数据、部署哈希、原生启动测试及汇总 JSON 保存在 `artifacts/performance/`、`artifacts/x64/native-tests.json`。历史汇总 JSON 保留；旧数组复制汇总脚本随实验移除。诊断仍拒绝未完成、线程数量不符、相机未绘制或异常退出的结果。
 
-主要实现位于 `native/engine_jobs.c`、`YxModDll/Mod/EngineScheduling.cs`、`YxModDll/Mod/NativeEngineCopies.cs` 和 `YxModDll/Mod/ParallelRenderPreparation.cs`。早期调查及未采用的方案见 `render-threading-investigation.md`；单独修改分片上限或唤醒数量的实验没有稳定收益，没有加入正式功能。
+当前保留实现位于 `native/engine_jobs.c` 和 `YxModDll/Mod/EngineScheduling.cs`。早期调查及未采用的方案见 `render-threading-investigation.md`；单独修改分片上限或唤醒数量的实验没有稳定收益，没有加入正式功能。
+
+## 2026-10-27：其他地图补测
+
+以下为移除数组复制前的同一台机器、当时受保护 Mod，固定视角、1280×720 无窗口离屏绘制；每次预热 30 秒，阶段采样 8 秒。调度对照为独立进程的 31 / 8 个任务线程，两侧均关闭并行复制，分别按两段样本的帧数加权。以下数字是本次短时帧耗时，不代表正常窗口 FPS 或稳定提升比例。
+
+| 地图 | 数据包大小 | 调度关闭、复制关闭 | 调度开启、复制关闭 | 复制调用最大数据块 | 退出结果 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| JBox V4.5 / 3477270523 | 889.5 MiB | 10.276 ms | 6.887 ms | 0 | 两种配置均自然退出，代码 0 |
+| VS / 3664321967 | 1237.6 MiB | 8.155 ms | 3.576 ms | 0 | 两种配置均自然退出，代码 0 |
+| 芙熊莲语图下 / 3572724736 | 934.5 MiB | 9.322 ms | 7.396 ms | 0 | 两种配置均异常退出，不能计为验收通过 |
+| 深林秘境闯关记 / 3804939578 | 239.4 MiB | 未测调度对照 | 仅测复制开关 | 70,400 字节 | 自然退出，代码 0 |
+
+四张地图的 `ParallelCalls` 和复制工作线程数均为 0。《深林秘境闯关记》的 TerrainData 有 614 个树木实例，实际引擎复制最大约 68.75 KiB，低于 1 MiB 阈值。复制关闭、开启、再次关闭三段为 5.908 / 5.443 / 5.758 ms；由于没有并行复制，不能把这段波动当作并行收益。JBox、VS 的调度采样也有波动，原始分阶段均值、P95 与帧数全部保留。
+
+这次没有在其他地图复现并行复制收益。已移除的实现不按地图 ID 筛选，但仅拦截 `TreeRenderer::CollectTreeRenderers` 的两处复制，适用范围较窄；文件体积大、普通 MeshRenderer 多或画面中有树，都不保证触发。
+
+诊断补充了真实复制计数、无大块数据时的关闭复测，并先卸载地图返回菜单再退出。《芙熊莲语图下》在关闭两项优化的配置下仍出现退出码 `-1073740791`，先前直接退出的失败记录也保留；此异常尚未定位或修复。保存的芙熊、森林图完整引擎日志还包含地形 Shader 缺失和退出阶段 SteamAPI 重复初始化信息，因此未确认完整画面正确性。
+
+结构化结果、退出状态、原始日志路径及 SHA-256：`artifacts/performance/render-maps-20261027/results.json`。测试后托管 DLL、原生启动 DLL 哈希与测试前一致，原本不存在的 `YxModEngine.ini` 已恢复为不存在，既有 `skip_update.flag` 保留；探针 DLL、备份和测试标记已清理。上述补测当时未改动生产优化逻辑或默认开关；随后按用户要求删除数组复制实验，仅保留调度优化。
