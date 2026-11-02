@@ -19,7 +19,11 @@
 - 分享链接打开现有 `https://yxmod.cc/panorama.html` 360° 预览页。图片经过只允许内容哈希路径的只读转发入口，提供 WebGL 所需跨域响应；Gitee 凭据不会发往浏览器。
 - 分享记录保存在原 PNG 旁的 `.share.json` 文件，记录原文件长度和修改时间。重新进入管理页可直接复制链接/预览；原文件改变后旧记录失效。原始 PNG 保留不动。
 
-验证：`tools/x64/test-emoji-media.ps1` 检查链接、图片边界、GIF 时序与循环、透明帧的 disposal 合成（逐像素对照 Pillow）；`test-emoji-media-game.ps1` 在隔离 Unity 目录检查受保护 DLL 的图像、固定高度布局、GIF 播放、剪贴板位图转换、聊天 Ctrl+V 预览、界面与悬停大图层级，以及表情和全景图实际上传及分享记录。Ctrl+V 测试在读取边界注入夹具，不替换用户实际剪贴板。传入 `-SkipUploads` 可只运行本地渲染和界面检查。`tests/test_emoji_service.py` 检查服务端尺寸、原像素保留、GIF 动画和透明帧、元数据清理、存储隔离、摘要和预览转发。服务源码与 systemd/Nginx 配置位于 `tools/emoji-service/`；`deploy-emoji-service.py` 复用服务器已有私有凭据部署，客户端无需任何图床配置。
+验证：`tools/x64/test-emoji-media.ps1` 检查链接、图片边界、GIF 时序与循环、透明帧的 disposal 合成（逐像素对照 Pillow）；`test-emoji-media-game.ps1` 在隔离 Unity 目录检查受保护 DLL 的图像、固定高度布局、GIF 播放、剪贴板位图转换、聊天 Ctrl+V 预览、界面与悬停大图层级，以及表情和全景图实际上传及分享记录。`EmojiTextScaleChecks.cs` 直接比较原版与聊天文本的字形纹理像素和网格尺寸，覆盖 0.75–3 倍画布缩放、中文、富文本、emoji 尺寸及运行时缩放变化。Ctrl+V 测试在读取边界注入夹具，不替换用户实际剪贴板。传入 `-SkipUploads` 可只运行本地渲染和界面检查。`tests/test_emoji_service.py` 检查服务端尺寸、原像素保留、GIF 动画和透明帧、元数据清理、存储隔离、摘要和预览转发。服务源码与 systemd/Nginx 配置位于 `tools/emoji-service/`；`deploy-emoji-service.py` 复用服务器已有私有凭据部署，客户端无需任何图床配置。
+
+文字缩放修复（2026-11-01）：聊天消息、聊天及原版输入框、ESC/大厅玩家列表、UI 头顶名字共用 `EmojiText`，现按原版 `Text.pixelsPerUnit` 请求动态字形，度量与顶点换算回 UI 单位；缩放变化会更新布局，Canvas 开启像素对齐时同步对齐文字、emoji、光标和命中坐标。IMGUI 菜单、按钮、窗口标题与聊天记录按 GUI 矩阵及 DPI 请求字形，直接绘制字体图集四边形并保持原有分组坐标、裁剪及颜色，避免放大小字形；聊天记录缓存同时跟踪缩放。3D TextMesh 和 TMP 继续使用原版字体、字号及材质，emoji 仍独立插入。问题来自此前的 emoji 文本渲染，GIF 更新没有修改普通文字渲染路径。
+
+隔离 Unity 验证：`EmojiTextScaleChecks.cs` 覆盖 0.75–3 倍缩放、中文/富文本、输入框、ESC 列表、头顶名字、像素对齐/命中，以及原生 TextMesh/TMP 的字体与材质保留。`EmojiGuiScaleChecks.cs` 检查菜单/聊天记录的屏幕字形密度、坐标恢复，读取实际窗口像素验证右侧裁剪和与原版 IMGUI 的颜色一致性。测试使用本地构建的完整 emoji 图集；`-SkipUploads` 不上传，`-ReuseRuntime` 可复用并保留隔离目录。实际设备上的观感仍需反馈者复测。
 
 
 部署验证（2026-11-01）：GIF 接收和 Nginx 的 8 MiB 限制已同步部署到现有下载服务器。服务器 Pillow 10.2 环境的 16 项服务测试通过；公网实测上传 334,441 字节 GIF，Gitee 匿名直链返回 333,388 字节，4 帧动画、逐帧延时和循环次数保留，SHA256 核对通过。PNG 公网上传与原像素回归也通过。
@@ -43,6 +47,7 @@
 - TMP_InputField 保留原生焦点、鼠标选择、多行、滚动、提交、取消和 IME 流程；左右移动、删除、选区替换、粘贴与长度限制使用完整字素。补齐旧字体拒收代理对的问题，尚未配对的高代理项暂存。数字、密码和自定义校验输入框保留原有规则。
 - 游戏或地图创建的普通 InputField 使用共用编辑适配器，支持多行换行/纵向滚动，单行确认继续触发原有 end-edit 回调；聊天输入仍使用其聊天发送逻辑。场景普通 TextMesh 通过共享图集 inline quad 显示 emoji；新出现的地图组件在周期发现后接入，头顶名字仍使用专用即时更新路径。
 - 动态字体沿用原字体家族创建独立图集，避免游戏原生 GUI/3D 文本刷新共享字形时造成漏绘；静态字体沿用原图集。按字号及样式预载、保留已请求字形，字体图集刷新后重新布局；原生窗口延后执行的正文也继承 Mod 作用域。退出时释放新增动态字体。
+- 字体预载或 Canvas 布局/网格重建期间，将 `Text.FontTextureChanged` 回调延迟到 `LateUpdate`，同时覆盖共享字体的其他文字控件；避免递归使用 uGUI 的共享 `VertexHelper`/Mesh，以及重入修改字体请求字典。延迟处理仍调用原版方法，使字形缓存失效并正常更新布局和网格。
 - IMGUI 的同行同样式文字合并绘制，避免逐字调用旧字体生成器；选区仍按原文字素边界绘制，复制保留原文。
 - Mod 单行输入框只在 Repaint 使用真实宽度调整横向滚动；Layout/Used 的占位矩形不改变光标视口。短文本不滚动，长文本滚动限制在实际溢出范围，缩短或替换文本后自动恢复。
 - 新增字体、UI mesh 及 IMGUI 渲染适配层通过声明式规则排除 Reactor 的 `hidemethods` 动态代理，以兼容旧 Mono 的结构体调用；其他保护保留。规则语法见 [Reactor 官方说明](https://www.eziriz.com/help/definitions/declarative_protection/)。
@@ -54,6 +59,7 @@
 - `tools/x64/test-emoji.ps1`：完整资源覆盖、官方 GraphemeBreakTest、编辑边界、混排、独立资源图集哈希，以及 Mod DLL 不再包含 PNG 的检查。
 - `tools/x64/test-emoji-mono.ps1`：使用本机游戏自带的 Mono x64 运行同一组测试及聊天 Rect 尾调用回归。
 - `tools/x64/test-emoji-game.ps1`：显式启动的真实 Unity 渲染检查。要求游戏已退出；临时入口运行受保护 DLL、生成截图并退出，随后恢复原 DLL，清理入口与路径标记。结果在 `artifacts/x64/emoji-game-smoke.*`。
+- `tools/x64/test-emoji-media-game.ps1 -RebuildOnly -SkipUploads`：无窗口运行受保护 DLL，使用 Direct3D 并行渲染、24 个共用动态字体的 UI 控件和 18 个 3D 名字/地图文字，持续 1800 帧切换字号、字体、emoji 与显隐。检查引擎异常、共享网格生成重入、实际相机绘制和原版字形像素密度；`-ProductDll` 可指定旧 DLL 做失败对照。
 
 真实 Unity 自动检查还包括 LevelInformationBox 的 Text 引用、普通 UI 字号自适应、地图 TextMesh、3D TMP、全部 3,953 张图的 TMP sprite 映射、原有图标共存、TMP 原文索引、编辑和长输入滚动。菜单覆盖依据实际组件通用入口及自动场景夹具；未逐一手动打开每个菜单验收。实际系统 emoji 面板/输入法候选交互、跨机器收发仍需操作验收。
 
