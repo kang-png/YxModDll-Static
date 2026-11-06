@@ -6,9 +6,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/**'   # 只有 docs 文件夹变化才触发
+      - 'docs/**'
+      - 'x64/YxModDll-x64.dll'
+      - 'YxModDll.dll'
       - '.github/workflows/static.yml'
       - '.github/scripts/check-site.py'
+      - '.github/scripts/build-version-history.py'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -36,6 +39,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          sparse-checkout: |
+            /.github/
+            /docs/
+          sparse-checkout-cone-mode: false
+      - name: Prepare website and current DLL history
+        run: python3 -B .github/scripts/build-version-history.py
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Check website and independent x64 / x32 downloads
