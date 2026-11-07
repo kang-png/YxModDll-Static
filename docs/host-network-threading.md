@@ -2,11 +2,11 @@
 
 ## 2026-10-26 收包模式开关
 
-设置 → YxMod设置新增“使用自定义收包”，默认关闭，保存到 `yxmodUseCustomSteamReceive`（已有手动保存的选择继续保留）。切换在下一次建房或进房时生效，当前房间不立即切换线程。
+设置 → YxMod设置新增“使用自定义收包”，默认开启（2026-11-07 调整），保存到 `yxmodUseCustomSteamReceive`（已有手动保存的选择继续保留）。切换在下一次建房或进房时生效，当前房间不立即切换线程。
 
 关闭后调用从本机游戏程序集保留的原版 `StartThread`、`StopThread`、`OnUpdate` 和 `ReadPackets`：可靠通道仍在主线程派发，不可靠通道和 `Flush()` 在原版收包线程执行（启用游戏多线程时）。自定义分片隔离、接收队列及超大包保护不参与该模式。主机状态差分调度优化仍然保留；这个开关只切换收包路径。
 
-验证命令：`pwsh -NoProfile -File tools/performance/test-host-network.ps1 -TestReceiveSwitch`。测试覆盖缺省模式、两种收包模式、两种线程配置、两个通道的消息派发及 `Flush()` 所在线程、会话中修改偏好延后生效，以及两种模式在实际私密主机地图中的启动和退出回收。此前两种模式的实际游戏验证结果保存在 `artifacts/performance/receive-switch-20261026/`；默认值改为关闭后未重启正在运行的游戏复测。
+验证命令：`pwsh -NoProfile -File tools/performance/test-host-network.ps1 -TestReceiveSwitch`。测试覆盖缺省模式、两种收包模式、两种线程配置、两个通道的消息派发及 `Flush()` 所在线程、会话中修改偏好延后生效，以及两种模式在实际私密主机地图中的启动和退出回收。此前两种模式的实际游戏验证结果保存在 `artifacts/performance/receive-switch-20261026/`；2026-11-07 默认值改为开启，本次未重启游戏复测。
 
 2026-10-23，针对本机 x64 游戏实现，保留原版联机协议。未发布、未提交 Git。
 
