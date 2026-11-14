@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generated_at": "2026-11-13T01:20:28.558473+00:00",
+  "generated_at": "2026-11-14T01:01:23.842202+00:00",
   "source": "workshop_details.csv",
   "source_count": 5659,
   "classification": "title and description keywords; categories may overlap",
@@ -11,7 +11,7 @@
       "min_mb": 100,
       "max_mb": 300,
       "count": 1545,
-      "sha256": "c91ce749014c7c5189a367350f132575a4a0043d5f03ecb4d92966c4a16444f7"
+      "sha256": "eb72642488c68764796f9de4c8ba7af3799ad1e9f77b015b0b62946056830f4d"
     },
     {
       "file": "maps_300_500.tsv",
@@ -19,7 +19,7 @@
       "min_mb": 300,
       "max_mb": 500,
       "count": 402,
-      "sha256": "ac7fe0b728698ec6483885b83bdd933033b308bfec5031321ab68921b1b92c95"
+      "sha256": "35f2690b9877063276e954644c1e1d93fecaef67b4b6b23641a3b429865328e1"
     },
     {
       "file": "maps_100_500.tsv",
@@ -27,7 +27,7 @@
       "min_mb": 100,
       "max_mb": 500,
       "count": 1947,
-      "sha256": "bebee6a782670ac88941e2cf125eed00f401eb9ac90e71e8683b338b1ebe0d06"
+      "sha256": "04eb135af5ff5ad12c7f578ec05df4219a01574fcd624c7e59adf789f9d72d31"
     },
     {
       "file": "maps_500_plus.tsv",
@@ -35,7 +35,7 @@
       "min_mb": 500,
       "max_mb": null,
       "count": 256,
-      "sha256": "b010264b1e7fb0d1174f34b84e6fd2d4acf0cb4fc913d1e54d533ad126275277"
+      "sha256": "f3d775e38acdb61e637adaa732497929c4acb6ce098a0f2d7dc68806d6879501"
     },
     {
       "file": "maps_bhop.tsv",
@@ -44,7 +44,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 697,
-      "sha256": "a55dcc48fcd48d907fc66fb6bd57322d7e14ed93975201abd6f3e32f83c576f8"
+      "sha256": "1e4ad0cb35f64e3ba025dfa1c731f476a6b9179410abbdeaeb598845db00333b"
     },
     {
       "file": "maps_puzzle.tsv",
@@ -53,7 +53,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 177,
-      "sha256": "861ffdad12034bf491d2b519b176794c0279b50afb34b61af766d239936ecbd8"
+      "sha256": "71c220e1e6c931adb4197de1139a2bc8a3835ae83a57d2b3d9cb9d3da3899a5d"
     },
     {
       "file": "maps_hide_seek.tsv",
@@ -62,7 +62,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 118,
-      "sha256": "7f68c69135226027839f36b746de4ff0b057dd380cfa0795232e3bc138f1d990"
+      "sha256": "6f5886996164482c9aa96d4afe518dee4ca5cec2d6f8995603abef6266b31d0a"
     },
     {
       "file": "maps_infection.tsv",
@@ -71,7 +71,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 41,
-      "sha256": "ae0a511db551e886c4494df5fef34dffac6a369a722e532854719e53897cedd6"
+      "sha256": "526baaba34da22d73d04bde211ba953c4582d00531620ab0582e460c215fe62d"
     },
     {
       "file": "maps_horror.tsv",
@@ -80,7 +80,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 52,
-      "sha256": "5e969cc6126afb55b92a784df2b7832311488bbc7b09584fc7d2ee9e90c43aaf"
+      "sha256": "9615b3832e386037f65f4f3e9d3f78accda955b7f30b5964e204b03226130907"
     },
     {
       "file": "maps_guess_song.tsv",
@@ -89,7 +89,7 @@
       "min_mb": 0,
       "max_mb": null,
       "count": 58,
-      "sha256": "d6c4a7ca32407e6b0d3128b9049ee31336f4c9fae719857511a2b544fda3ed77"
+      "sha256": "349eed69868ebb3d53eeed4185d6e9694ca150bd97aa280f2283505ca1d650a4"
     }
   ]
 }
